@@ -3,6 +3,7 @@ Yup.
 
 ## Importing this Project
 This project uses Eclipse.  To import this project into your Eclipse workspace, do the following:
+
 1. In Eclipse, open the **Import...** wizard, choose **Git -> Projects from Git**, and then click **Next >**
 2. On the next page, choose **Clone URI**
 3. Copy the *HTTPS clone URL* for this repository.  All of the other necessary fields should fill in automatically.  Click **Next >**.
