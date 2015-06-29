@@ -16,11 +16,6 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 
-// Class CountOccurrenceOfWords in file CountOccurrenceOfWords.java
-// Written by Nick Brixius (brixiusn@erau.edu)
-// Modified by Sean Holden (holdens@my.erau.edu)
-// ERAU, SE320-01, Homework Assignment H3, Exercise 1
-// Sept 2014
 /**
  * @author Nick Brixius (brixiusn@erau.edu)
  * @author Sean Holden (holdens@my.erau.edu)
@@ -37,7 +32,7 @@ public class CountOccurrenceOfWords {
 			// Someone didn't use the command line.  Oh well, we'll invoke the GUI
 //			fileList = Utils.getFileViaGui();
 			fileList = new File[1];
-			fileList[0] = new File("text.txt");
+			fileList[0] = new File("data/text.txt");
 		}
 		else{
 			// Try to get the filename from the command line
@@ -92,7 +87,7 @@ public class CountOccurrenceOfWords {
 
 		
 		// TODO learn to use XSSF for xlsx (or not...)
-		File file = new File("allWords.xls");
+		File file = new File("data/allWords.xls");
 		
 		try {
 		    POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(file));
