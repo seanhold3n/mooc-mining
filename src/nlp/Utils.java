@@ -19,6 +19,7 @@ public class Utils {
 	 * @return The list of files selected
 	 * @author Sean Holden (holdens@my.erau.edu)
 	 */
+	// TODO JavaFX implementation
 	public static File[] getFileViaGui(){
 		final JFileChooser fc = new JFileChooser();
 
@@ -39,6 +40,11 @@ public class Utils {
 
 	}
 	
+	/** Imports the contents of a given file as a Java string.
+	 * @param f The file to read
+	 * @return The content of the file as a string
+	 * @throws IOException For a variety of IO reasons
+	 */
 	public static String getFullFileText(File f) throws IOException{
 		// Create a buffered file reader
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
