@@ -1,4 +1,4 @@
-package nlp;
+package edu.erau.holdens.moocmining;
 
 import java.io.BufferedReader;
 import java.io.File;

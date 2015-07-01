@@ -1,4 +1,4 @@
-package sandbox;
+package edu.erau.holdens.moocmining.sandbox;
 
 import java.io.File;
 import java.io.FileInputStream;

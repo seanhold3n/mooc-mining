@@ -1,4 +1,4 @@
-package nlp;
+package edu.erau.holdens.moocmining;
 
 /**
  * @author Sean Holden (holdens@my.erau.edu)
