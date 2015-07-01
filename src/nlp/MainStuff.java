@@ -21,29 +21,11 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
  * @author Sean Holden (holdens@my.erau.edu)
  *
  */
-public class CountOccurrenceOfWords {
-
-	/** List of files to scan */
-	private static File[] fileList;
+public class MainStuff {
 
 	public static void main(String[] args) throws IOException {		
 
-		if (args.length == 0){
-			// Someone didn't use the command line.  Oh well, we'll invoke the GUI
-			//			fileList = Utils.getFileViaGui();
-			fileList = new File[1];
-			fileList[0] = new File("data/text.txt");
-		}
-		else{
-			// Try to get the filename from the command line
-			fileList = new File[1];
-			fileList[0] = new File(args[0]);
-		}
-
-		for(File f : fileList){
-			scanFile(f);
-		}
-
+		scanFile(new File("data/text.txt"));
 
 	}
 
@@ -150,11 +132,7 @@ public class CountOccurrenceOfWords {
 			ioe.printStackTrace();
 		}
 
-//		System.out.println("======================");
-
-
-//		System.out.printf("Occurrence of all %d words in %s:\n", entrySet.size(), f.getName());
-
+		
 		// Create word list
 		List<Word> wordlist = new ArrayList<Word>(entrySet.size());
 
@@ -179,13 +157,13 @@ public class CountOccurrenceOfWords {
 //		System.out.printf("Occurrence of top %d words in %s:\n", wordlist.size(), f.getName());
 		System.out.printf("Occurrence of %d words in the sample:\n", wordlist.size());
 		System.out.println("Raw freq\tCOCA freq\tNorm freq\tWord");
-		System.out.println("----------------------------------------");
+		System.out.println("----------------------------------------------------");
 
 		for (Word w : wordlist){
 //			System.out.println(w.getRawFrequency() + "\t" + w.getValue());
 			System.out.printf("%d\t\t%d\t\t%.2f\t\t%s\n",w.getRawFrequency(), w.getGlobalFrequency(), w.getNormalFreq(),  w.getValue());
 		}
 
-		System.out.println("------------------");
+		System.out.println("----------------------------------------------------");
 	}
 }
