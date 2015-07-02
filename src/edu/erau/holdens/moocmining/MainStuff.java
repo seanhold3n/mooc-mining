@@ -17,14 +17,12 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 
 /**
- * @author Nick Brixius (brixiusn@erau.edu)
- * @author Sean Holden (holdens@my.erau.edu)
- *
+ * @author Sean Holden (holdens@my.erau.edu), with some derivative code (original word counting code) from Nick Brixius (brixiusn@erau.edu)
  */
 public class MainStuff {
 
 	/** Excel File from which to populate the COCA map */
-	private static final File cocaFile = new File("data/allWords.xls");	// TODO learn to use XSSF for xlsx (or not...)
+	private static final File COCA_FILE = new File("data/allWords.xls");	// TODO learn to use XSSF for xlsx (or not...)
 
 	public static void main(String[] args) throws IOException {		
 
@@ -97,7 +95,6 @@ public class MainStuff {
 		System.out.println("----------------------------------------------------");
 
 		for (Word w : wordlist){
-			//			System.out.println(w.getRawFrequency() + "\t" + w.getValue());
 			System.out.printf("%d\t\t%d\t\t%.2f\t\t%s\n", w.getRawFrequency(), w.getGlobalFrequency(), w.getNormalFreq(),  w.getValue());
 		}
 
@@ -111,11 +108,20 @@ public class MainStuff {
 	 */
 	public static TreeMap<String, Integer> getCocaMapFromWords(TreeMap<String, Integer> map) throws IOException{
 		
+		/** The column in the sheet containing the words */
+		final int COL_WORD = 3;		
+		/** The column in the sheet containing the parts of speech (PoS) */
+		final int COL_POS = 4;		
+		/** The column in the sheet containing the word count in all COCA entries */
+		final int COL_COCA_ALL = 5;
+		/** The column in the sheet containing the word count in all COCA Academic entries */
+		final int COL_COCA_ACAD = 6;
+
 		/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value) */
 		TreeMap<String, Integer> cocaMap = new TreeMap<String, Integer>();
 
 		// POI jazz to get the first sheet from the Excel file
-		POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(cocaFile));
+		POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(COCA_FILE));
 		HSSFWorkbook wb = new HSSFWorkbook(fs);
 		HSSFSheet sheet = wb.getSheetAt(0);
 		HSSFRow row;
@@ -139,11 +145,19 @@ public class MainStuff {
 			row = sheet.getRow(r);
 			if(row != null) {
 				// Get the word from the row
-				String word = row.getCell(3).getStringCellValue();
+				String word = row.getCell(COL_WORD).getStringCellValue();
 
+				// Get the part of the speech of the word in the list
+				String pos = row.getCell(COL_POS).getStringCellValue();
+				
 				// If the word is in the map, get the freq value and add it to the map
-				if (map.containsKey(word)){
-					cocaMap.put(word, (int)row.getCell(6).getNumericCellValue());
+				if (map.containsKey(word) && (
+						pos.equals("n")		// Noun
+						|| pos.equals("j")	// Adjective
+						|| pos.equals("v")	// Verb
+						|| pos.equals("r")	// Adverb						
+				)){
+					cocaMap.put(word, (int)row.getCell(COL_COCA_ALL).getNumericCellValue());
 				}
 
 			}
