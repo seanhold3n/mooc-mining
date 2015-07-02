@@ -1,5 +1,5 @@
 # mooc-mining
-Yup.
+Yup.  Compares the frequency of words from some source to the frequency of all academic texts in the COCA (Corpus of Contemporary American English).  More information about the COCA project, may be found here: http://www.academicvocabulary.info/.  For more about COCA projects, created by Mark Davies at Brigham Young University, check out http://corpus.byu.edu/.
 
 ## Importing this Project
 This project uses Eclipse.  To import this project into your Eclipse workspace, do the following:
