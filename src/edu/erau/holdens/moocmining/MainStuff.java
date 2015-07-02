@@ -4,6 +4,7 @@ import static edu.erau.holdens.moocmining.Utils.getFullFileText;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,85 +23,65 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 public class MainStuff {
 
 	/** Excel File from which to populate the COCA map */
-	private static final File COCA_FILE = new File("data/allWords.xls");	// TODO learn to use XSSF for xlsx (or not...)
+	private static final File COCA_FILE = new File("data/allWords.xls");	
 
+	/** Excel File from which to populate the discussion text */
+	private static final File DISCUSSIONS_FILE = new File("data/transcripts.xls");
+	/** Excel File from which to populate the discussion data (entry author, learning phase) */
+	private static final File DISCUSSIONS_DATA_FILE = new File("data/data.10.29.2014.xls");
+
+	// TODO learn to use XSSF for xlsx (or not...)
+	
+	
 	public static void main(String[] args) throws IOException {		
-
 		scanFile(new File("data/text.txt"));
-
 	}
 
-	/** Scans a file.  Any output is currently written to the console.
-	 * @param f The file to scan
-	 * @throws IOException
-	 */
-	public static void scanFile(File f) throws IOException{
-		scanText(getFullFileText(f));
-	}
-
-	/** Scans a string.  Any output is currently written to the console.
-	 * The general procedure of this method is as follows:
-	 * <ol>
-	 * <li> Create a map of all of the words and their frequencies in the given string
-	 * <li> Create a map of all matching words and their frequencies in the COCA Excel sheet
-	 * <li> Merge the data of the two maps by creating a list of {@link Word} objects that contains values for both the frequencies
-	 * <li> From within the Word class, calculate the <i>normalized</i> frequency by comparing the sample frequency with the COCA frequency
-	 * <li> Print the results
-	 * </ol>
-	 * @param text The text to scan
+	
+	/**
+	 * @return A TreeMap containing key-value pairs of the entry number (key) and the discussion entry (value)
 	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 */
-	public static void scanText(String text) throws IOException{
-
-
-		/** Map of all of the words in the provided string (key) and the number of occurrences (value) */
-		TreeMap<String, Integer> map;
-		/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value) */
-		TreeMap<String, Integer> cocaMap;
-
-		System.out.println("Beginning scan...");
-
-
-		// Clean the array of words and load the words into the map
-		map = getWordCount(text);
-
-		// Get all entries into a set
-		Set<Map.Entry<String, Integer>> entrySet = map.entrySet();
-
-		// Create word list
-		List<Word> wordlist = new ArrayList<Word>(entrySet.size());
-
-		// Populate the COCA map using words from the sample
-		cocaMap = getCocaMapFromWords(map);
-
-		// Get key and value from each entry
-		for (Map.Entry<String, Integer> entry: entrySet){
-
-			// Ignore really infrequent words
-			if (entry.getValue() > 4){
-				try{
-					wordlist.add(new Word(entry.getKey(), entry.getValue(), cocaMap.get(entry.getKey())));
-				} catch (Exception e){} // Do nothing if an error occurs
-			}
+	public static TreeMap<Integer, DiscussionEntry> createTranscriptsMap() throws FileNotFoundException, IOException{
+		
+		/** The column in the sheet containing the words */
+		final int COL_NAME = 0;
+		/** The number of rows to analyze in the data workbook */
+		final int DATA_ROWS = 747;
+		/** The number of rows to analyze in the data workbook */
+		final int DISCUSSION_ROWS = 1230;
+		
+		TreeMap<Integer, DiscussionEntry> map = new TreeMap<Integer, DiscussionEntry>();
+		
+		// POI jazz to get the first sheet from the Excel file
+		HSSFSheet discussionSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_FILE)).getSheetAt(0);
+		HSSFSheet dataSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_DATA_FILE)).getSheetAt(0);
+		
+		
+		int currentNote = 1;
+		
+		// DiscussionEntry data
+		String name;
+		String text;
+		LearningPhase lp;
+		
+		// Get all of the data (exclude the header row)
+		for (int dataRow = 1; dataRow < DATA_ROWS; dataRow++){
+			name = dataSheet.getRow(dataRow).getCell(COL_NAME).getStringCellValue();
+			
+			map.put(currentNote, new DiscussionEntry(currentNote, name, "", LearningPhase.X));
+		
+			
 		}
-
-		/** Sorts the wordlist based on the implementation of the compareTo() method in the Word class.
-		 * Note: This method requires Java 8 or higher */ 
-		wordlist.sort(null); // TODO look into NavigableMap and NavigableSet for this
-
-		// Print
-		//		System.out.printf("Occurrence of top %d words in %s:\n", wordlist.size(), f.getName());
-		System.out.printf("Occurrence of %d words in the sample:\n", wordlist.size());
-		System.out.println("Raw freq\tCOCA freq\tNorm freq\tWord");
-		System.out.println("----------------------------------------------------");
-
-		for (Word w : wordlist){
-			System.out.printf("%d\t\t%d\t\t%.2f\t\t%s\n", w.getRawFrequency(), w.getGlobalFrequency(), w.getNormalFreq(),  w.getValue());
-		}
-
-		System.out.println("----------------------------------------------------");
+		
+		
+		
+		return map;
+		
 	}
 
+	
 	/**
 	 * @param map A map containing the words for which to search
 	 * @return A TreeMap of all of the words in the COCA sheet (key) and the occurrence of each word (value)
@@ -202,5 +183,79 @@ public class MainStuff {
 
 		return map;
 	}
+	
+
+	/** Scans a file.  Any output is currently written to the console.
+	 * @param f The file to scan
+	 * @throws IOException
+	 */
+	public static void scanFile(File f) throws IOException{
+		scanText(getFullFileText(f));
+	}
+
+	
+	/** Scans a string.  Any output is currently written to the console.
+	 * The general procedure of this method is as follows:
+	 * <ol>
+	 * <li> Create a map of all of the words and their frequencies in the given string
+	 * <li> Create a map of all matching words and their frequencies in the COCA Excel sheet
+	 * <li> Merge the data of the two maps by creating a list of {@link Word} objects that contains values for both the frequencies
+	 * <li> From within the Word class, calculate the <i>normalized</i> frequency by comparing the sample frequency with the COCA frequency
+	 * <li> Print the results
+	 * </ol>
+	 * @param text The text to scan
+	 * @throws IOException 
+	 */
+	public static void scanText(String text) throws IOException{
+
+
+		/** Map of all of the words in the provided string (key) and the number of occurrences (value) */
+		TreeMap<String, Integer> map;
+		/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value) */
+		TreeMap<String, Integer> cocaMap;
+
+		System.out.println("Beginning scan...");
+
+
+		// Clean the array of words and load the words into the map
+		map = getWordCount(text);
+
+		// Get all entries into a set
+		Set<Map.Entry<String, Integer>> entrySet = map.entrySet();
+
+		// Create word list
+		List<Word> wordlist = new ArrayList<Word>(entrySet.size());
+
+		// Populate the COCA map using words from the sample
+		cocaMap = getCocaMapFromWords(map);
+
+		// Get key and value from each entry
+		for (Map.Entry<String, Integer> entry: entrySet){
+
+			// Ignore really infrequent words
+			if (entry.getValue() > 4){
+				try{
+					wordlist.add(new Word(entry.getKey(), entry.getValue(), cocaMap.get(entry.getKey())));
+				} catch (Exception e){} // Do nothing if an error occurs
+			}
+		}
+
+		/** Sorts the wordlist based on the implementation of the compareTo() method in the Word class.
+		 * Note: This method requires Java 8 or higher */ 
+		wordlist.sort(null); // TODO look into NavigableMap and NavigableSet for this
+
+		// Print
+		//		System.out.printf("Occurrence of top %d words in %s:\n", wordlist.size(), f.getName());
+		System.out.printf("Occurrence of %d words in the sample:\n", wordlist.size());
+		System.out.println("Raw freq\tCOCA freq\tNorm freq\tWord");
+		System.out.println("----------------------------------------------------");
+
+		for (Word w : wordlist){
+			System.out.printf("%d\t\t%d\t\t%.2f\t\t%s\n", w.getRawFrequency(), w.getGlobalFrequency(), w.getNormalFreq(),  w.getValue());
+		}
+
+		System.out.println("----------------------------------------------------");
+	}
+	
 
 }
