@@ -5,7 +5,8 @@ public enum LearningPhase {
 	T("Triggering event"),
 	E("Exploration"),
 	I("Integration"),
-	R("Resolution");
+	R("Resolution"),
+	X("Unknown");
 	
 	private String description;
 	
