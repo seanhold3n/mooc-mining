@@ -65,7 +65,7 @@ public class DiscussionEntry implements Comparable<DiscussionEntry> {
 	}
 	
 	public String toString(){
-		return String.format("Number: %d; Author: %s", number, author);
+		return String.format("Number: %d; Author: %s; Phase: %s; Text: %s", number, author, phase.name(), text);
 	}
 
 }

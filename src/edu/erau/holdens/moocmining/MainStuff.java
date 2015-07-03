@@ -16,6 +16,8 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.format.CellTextFormatter;
+import org.apache.poi.ss.usermodel.Cell;
 
 /**
  * @author Sean Holden (holdens@my.erau.edu), with some derivative code (original word counting code) from Nick Brixius (brixiusn@erau.edu)
@@ -39,16 +41,18 @@ public class MainStuff {
 
 	
 	/**
-	 * @return A TreeMap containing key-value pairs of the entry number (key) and the discussion entry (value)
+	 * @return A TreeMap containing key-value pairs of thewords entry number (key) and the discussion entry (value)
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
 	public static TreeMap<Integer, DiscussionEntry> createTranscriptsMap() throws FileNotFoundException, IOException{
 		
-		/** The column in the sheet containing the words */
+		/** The column in the sheet containing the encoded names */
 		final int COL_NAME = 0;
+		/** The column in the sheet containing the words */
+		final int COL_TEXT = 1;
 		/** The number of rows to analyze in the data workbook */
-		final int DATA_ROWS = 747;
+		final int DATA_ROWS = 746; 	// TODO gets wonky when this is 747
 		/** The number of rows to analyze in the data workbook */
 		final int DISCUSSION_ROWS = 1230;
 		
@@ -59,23 +63,61 @@ public class MainStuff {
 		HSSFSheet dataSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_DATA_FILE)).getSheetAt(0);
 		
 		
-		int currentNote = 1;
 		
 		// DiscussionEntry data
 		String name;
 		String text;
 		LearningPhase lp;
-		
+
+		/** Flag for the inner while loop to see if we are still reading rows for a single
+		 * discussion entry */
+		boolean stillReading = false;
+
+		int discRowNum = 1;
+
+		// Get the first row of text per entry
+		HSSFRow textRow = dataSheet.getRow(discRowNum);
+
 		// Get all of the data (exclude the header row)
-		for (int dataRow = 1; dataRow < DATA_ROWS; dataRow++){
-			name = dataSheet.getRow(dataRow).getCell(COL_NAME).getStringCellValue();
+		for (int dataRowNum = 1; dataRowNum < DATA_ROWS; dataRowNum++){
 			
-			map.put(currentNote, new DiscussionEntry(currentNote, name, "", LearningPhase.X));
+			// Get the author
+			name = dataSheet.getRow(dataRowNum).getCell(COL_NAME).getStringCellValue();
+
+			// Reset text
+			text = "";
+			stillReading = true;
+
+			/* Get the text from the other workbook.
+			 * A while loop is used because an unknown number of rows
+			 * contain information for one discussion entry.
+			 */
+			while (stillReading){
+				// Get the text from the row
+				System.out.printf("Currently reading dataRow %d; discussionRow %d\n", dataRowNum, discRowNum);
+//				text += textRow.getCell(COL_TEXT).getStringCellValue();
+				try{
+					text += textRow.getCell(COL_TEXT).getStringCellValue()+"\n";
+					System.out.println(text);
+				} catch (Exception e){System.err.println(e.getMessage());};
+				
+				// Get the next row
+				discRowNum++;
+				textRow = discussionSheet.getRow(discRowNum);
+				try{
+					stillReading = textRow.getCell(0).getStringCellValue().equals("");
+				}catch (NullPointerException npe){
+					stillReading = true;
+				}
+			}
+			
+			
+			map.put(dataRowNum, new DiscussionEntry(dataRowNum, name, text, LearningPhase.X));
 		
 			
 		}
 		
-		
+		assert(discRowNum == DISCUSSION_ROWS);
 		
 		return map;
 		
