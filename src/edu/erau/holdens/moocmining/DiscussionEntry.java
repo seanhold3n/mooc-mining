@@ -1,5 +1,12 @@
 package edu.erau.holdens.moocmining;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 
 public class DiscussionEntry implements Comparable<DiscussionEntry> {
 	
@@ -62,6 +69,68 @@ public class DiscussionEntry implements Comparable<DiscussionEntry> {
 	 */
 	public LearningPhase getLearningPhase() {
 		return phase;
+	}
+	
+	
+	// TODO clean up documentation - this was copy-pasted from scanText() in MainStuff 
+	/** Scans a string.  Any output is currently written to the console.
+	 * The general procedure of this method is as follows:
+	 * <ol>
+	 * <li> Create a map of all of the words and their frequencies in the given string
+	 * <li> Create a map of all matching words and their frequencies in the COCA Excel sheet
+	 * <li> Merge the data of the two maps by creating a list of {@link Word} objects that contains values for both the frequencies
+	 * <li> From within the Word class, calculate the <i>normalized</i> frequency by comparing the sample frequency with the COCA frequency
+	 * <li> Print the results
+	 * </ol>
+	 * @param text The text to scan
+	 */
+	public void scan(){
+
+		/** Map of all of the words in the provided string (key) and the number of occurrences (value) */
+		HashMap<String, Integer> map;
+
+//		System.out.println("Beginning scan...");
+
+
+		// Clean the array of words and load the words into the map
+		map = MainStuff.getWordCounts(text);
+
+		// Get all entries into a set
+		Set<Map.Entry<String, Integer>> entrySet = map.entrySet();
+
+		// Create word list
+		List<Word> wordlist = new ArrayList<Word>(entrySet.size());
+
+		// Populate the COCA map using words from the sample
+//		populateCocaMapFromWords(map);	// removing this added SOOO MUUUUCH SPEEEED!! :D
+
+		// Get key and value from each entry
+		for (Map.Entry<String, Integer> entry: entrySet){
+
+			// Ignore really infrequent words
+//			if (entry.getValue() > 4){
+				try{
+					wordlist.add(new Word(entry.getKey(), entry.getValue(), COCAMap.getInstance().get(entry.getKey())));
+				} catch (Exception e){} // Do nothing if an error occurs
+//			}
+		}
+
+		/** Sorts the wordlist based on the implementation of the compareTo() method in the Word class.
+		 * Note: This method requires Java 8 or higher */ 
+		wordlist.sort(null); // TODO look into NavigableMap and NavigableSet for this
+		
+		// Print 10 most frequent words based on normalized frequency
+		StringBuilder printStr = new StringBuilder(String.format("Top 10 words in entry %3d: ", number));
+		for (int i = 0; i < 10; i++){
+			try{
+				printStr.append(wordlist.get(i) + (i==9 ? "." : ", "));
+			} catch (IndexOutOfBoundsException iobe){
+				System.err.printf("Entry %3d vector compilation ended abruptly on index %d\n", number, i);
+				break;
+			}
+		}
+		System.out.println(printStr);
+		
 	}
 	
 	public String toString(){

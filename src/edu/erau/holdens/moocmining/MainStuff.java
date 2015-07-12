@@ -32,9 +32,7 @@ public class MainStuff {
 
 	// TODO learn to use XSSF for xlsx (or not...)
 
-	
-	private static int nEntry;
-	// TODO this is a sloppy place to put this and not a very OO-friendly approach
+
 	
 	public static void main(String[] args) throws IOException {
 		
@@ -56,8 +54,7 @@ public class MainStuff {
 		
 		// Scan each discussion
 		for (DiscussionEntry d : discussions.values()){
-			nEntry = d.getEntryNumber();
-			scanText(d.getDiscussionText());
+			d.scan();
 		}
 		
 		
@@ -203,9 +200,11 @@ public class MainStuff {
 	 * <li> Print the results
 	 * </ol>
 	 * @param text The text to scan
-	 * @throws IOException 
+	 * @Deprecated For this program, you probably want to scan a {@link DiscussionEntry}, so use the non-static
+	 * {@link DiscussionEntry#scan()} method.
 	 */
-	public static void scanText(String text) throws IOException{
+	@Deprecated
+	public static void scanText(String text) {
 
 
 		/** Map of all of the words in the provided string (key) and the number of occurrences (value) */
@@ -253,17 +252,7 @@ public class MainStuff {
 //
 //		System.out.println("----------------------------------------------------");
 		
-		// Print 10 most frequent words based on normalized frequency
-		StringBuilder printStr = new StringBuilder(String.format("Top 10 words in entry %3d: ", nEntry));
-		for (int i = 0; i < 10; i++){
-			try{
-				printStr.append(wordlist.get(i) + (i==9 ? "." : ", "));
-			} catch (IndexOutOfBoundsException iobe){
-				System.err.printf("Entry %3d vector compilation ended abruptly on index %d\n", nEntry, i);
-				break;
-			}
-		}
-		System.out.println(printStr);
+	
 		
 	}
 	
