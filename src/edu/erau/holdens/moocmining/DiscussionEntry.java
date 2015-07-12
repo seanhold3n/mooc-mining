@@ -120,12 +120,13 @@ public class DiscussionEntry implements Comparable<DiscussionEntry> {
 		wordlist.sort(null); // TODO look into NavigableMap and NavigableSet for this
 		
 		// Print 10 most frequent words based on normalized frequency
-		StringBuilder printStr = new StringBuilder(String.format("Top 10 words in entry %3d: ", number));
+		StringBuilder printStr = new StringBuilder(String.format("Entry: %3d, Author: %3s, Phase: %s, words: {", number, author, phase.name()));
 		for (int i = 0; i < 10; i++){
 			try{
-				printStr.append(wordlist.get(i) + (i==9 ? "." : ", "));
-			} catch (IndexOutOfBoundsException iobe){
-				System.err.printf("Entry %3d vector compilation ended abruptly on index %d\n", number, i);
+				printStr.append(wordlist.get(i) + (i==9 ? "}" : ", "));
+			} catch (IndexOutOfBoundsException ioobe){
+//				System.err.printf("Entry %3d vector compilation ended abruptly on index %d\n", number, i);
+				printStr.append("<end>}");
 				break;
 			}
 		}
