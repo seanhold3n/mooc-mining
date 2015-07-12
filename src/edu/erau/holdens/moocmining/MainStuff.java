@@ -49,7 +49,7 @@ public class MainStuff {
 
 	
 	/**
-	 * @return A TreeMap containing key-value pairs of thewords entry number (key) and the discussion entry (value)
+	 * @return A TreeMap containing key-value pairs of the words entry number (key) and the discussion entry (value)
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
@@ -270,7 +270,7 @@ public class MainStuff {
 		List<Word> wordlist = new ArrayList<Word>(entrySet.size());
 
 		// Populate the COCA map using words from the sample
-		cocaMap.putAll(populateCocaMapFromWords(map));	// TODO untested
+		populateCocaMapFromWords(map);	// TODO untested
 
 		// Get key and value from each entry
 		for (Map.Entry<String, Integer> entry: entrySet){
