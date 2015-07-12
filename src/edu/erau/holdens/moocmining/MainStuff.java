@@ -33,9 +33,17 @@ public class MainStuff {
 	private static final File DISCUSSIONS_DATA_FILE = new File("data/data.10.29.2014.xls");
 
 	// TODO learn to use XSSF for xlsx (or not...)
+
+	
+	/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value) */
+	private static TreeMap<String, Integer> cocaMap;
 	
 	
-	public static void main(String[] args) throws IOException {		
+	public static void main(String[] args) throws IOException {	
+		// Initialize an empty COCA map
+		cocaMap = new TreeMap<String, Integer>();
+		
+		// Scan stuff
 		scanFile(new File("data/text.txt"));
 	}
 
@@ -129,7 +137,7 @@ public class MainStuff {
 	 * @return A TreeMap of all of the words in the COCA sheet (key) and the occurrence of each word (value)
 	 * @throws IOException
 	 */
-	public static TreeMap<String, Integer> getCocaMapFromWords(TreeMap<String, Integer> map) throws IOException{
+	public static void populateCocaMapFromWords(TreeMap<String, Integer> map) throws IOException{
 		
 		/** The column in the sheet containing the words */
 		final int COL_WORD = 3;		
@@ -139,9 +147,6 @@ public class MainStuff {
 		final int COL_COCA_ALL = 5;
 		/** The column in the sheet containing the word count in all COCA Academic entries */
 		final int COL_COCA_ACAD = 6;
-
-		/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value) */
-		TreeMap<String, Integer> cocaMap = new TreeMap<String, Integer>();
 
 		// POI jazz to get the first sheet from the Excel file
 		POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(COCA_FILE));
@@ -186,8 +191,6 @@ public class MainStuff {
 			}
 		}
 
-		return cocaMap;
-
 	}
 
 
@@ -195,7 +198,7 @@ public class MainStuff {
 	 * @param text The string containing the words to count.
 	 * @return A TreeMap containing key-value pairs of the words (key) and the number of occurrences (value)
 	 */
-	public static TreeMap<String, Integer> getWordCount(String text){
+	public static TreeMap<String, Integer> getWordCounts(String text){
 
 		// Split the text into words based on this regex
 		String[] words = text.split("[ \n\t\r.,;:!?(){}]");
@@ -253,14 +256,12 @@ public class MainStuff {
 
 		/** Map of all of the words in the provided string (key) and the number of occurrences (value) */
 		TreeMap<String, Integer> map;
-		/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value) */
-		TreeMap<String, Integer> cocaMap;
 
 		System.out.println("Beginning scan...");
 
 
 		// Clean the array of words and load the words into the map
-		map = getWordCount(text);
+		map = getWordCounts(text);
 
 		// Get all entries into a set
 		Set<Map.Entry<String, Integer>> entrySet = map.entrySet();
@@ -269,7 +270,7 @@ public class MainStuff {
 		List<Word> wordlist = new ArrayList<Word>(entrySet.size());
 
 		// Populate the COCA map using words from the sample
-		cocaMap = getCocaMapFromWords(map);
+		cocaMap.putAll(populateCocaMapFromWords(map));	// TODO untested
 
 		// Get key and value from each entry
 		for (Map.Entry<String, Integer> entry: entrySet){
