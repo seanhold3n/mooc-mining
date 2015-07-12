@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -68,9 +69,9 @@ public class MainStuff {
 	 */
 	public static HashMap<Integer, DiscussionEntry> createTranscriptsMap() throws FileNotFoundException, IOException{
 		
-		/** The column in the sheet containing the encoded names */
+		/** The column in the sheet containing the encoded names (data xls) */
 		final int COL_NAME = 0;
-		/** The column in the sheet containing the words */
+		/** The column in the sheet containing the words (text xls) */
 		final int COL_TEXT = 1;
 		/** The number of rows to analyze in the data workbook */
 		final int DATA_ROWS = 746; 	// TODO gets wonky when this is 747
@@ -102,8 +103,29 @@ public class MainStuff {
 		// Get all of the data (exclude the header row)
 		for (int dataRowNum = 1; dataRowNum < DATA_ROWS; dataRowNum++){
 			
+			HSSFRow thisRow = dataSheet.getRow(dataRowNum);
+			
+			System.out.println("Scanning cell " + dataRowNum);
+			
 			// Get the author
-			name = dataSheet.getRow(dataRowNum).getCell(COL_NAME).getStringCellValue();
+			name = thisRow.getCell(COL_NAME).getStringCellValue();
+			
+			// Get the learning phase
+			if (checkCell(thisRow.getCell(2))){
+				lp = LearningPhase.T;
+			}
+			else if (checkCell(thisRow.getCell(3))){
+				lp = LearningPhase.E;
+			}
+			else if (checkCell(thisRow.getCell(4))){
+				lp = LearningPhase.I;
+			}
+			else if (checkCell(thisRow.getCell(5))){
+				lp = LearningPhase.R;
+			}
+			else{
+				lp = LearningPhase.X;
+			}
 
 			// Reset text
 			text = "";
@@ -133,7 +155,7 @@ public class MainStuff {
 			}
 			
 			
-			map.put(dataRowNum, new DiscussionEntry(dataRowNum, name, text, LearningPhase.X));
+			map.put(dataRowNum, new DiscussionEntry(dataRowNum, name, text, lp));
 		
 			
 		}
@@ -253,6 +275,16 @@ public class MainStuff {
 //		System.out.println("----------------------------------------------------");
 		
 	
+		
+	}
+	
+	public static boolean checkCell(HSSFCell c){
+
+		try{
+			return (c.getNumericCellValue() == 1);
+		} catch (NullPointerException npe){
+			return false;
+		}
 		
 	}
 	
