@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,10 +25,7 @@ import org.apache.poi.ss.usermodel.Cell;
  */
 public class MainStuff {
 
-	/** Excel File from which to populate the COCA map */
-	private static final File COCA_FILE = new File("data/allWords.xls");	
-
-	/** Excel File from which to populate the discussion text */
+		/** Excel File from which to populate the discussion text */
 	private static final File DISCUSSIONS_FILE = new File("data/transcripts.xls");
 	/** Excel File from which to populate the discussion data (entry author, learning phase) */
 	private static final File DISCUSSIONS_DATA_FILE = new File("data/data.10.29.2014.xls");
@@ -35,16 +33,34 @@ public class MainStuff {
 	// TODO learn to use XSSF for xlsx (or not...)
 
 	
-	/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value) */
-	private static TreeMap<String, Integer> cocaMap;
+	private static int nEntry;
+	// TODO this is a sloppy place to put this and not a very OO-friendly approach
 	
-	
-	public static void main(String[] args) throws IOException {	
-		// Initialize an empty COCA map
-		cocaMap = new TreeMap<String, Integer>();
+	public static void main(String[] args) throws IOException {
 		
 		// Scan stuff
-		scanFile(new File("data/text.txt"));
+//		scanFile(new File("data/text.txt"));
+		
+		// Load the discussions
+		HashMap<Integer, DiscussionEntry> discussions = createTranscriptsMap();
+		// TODO (note) seems to be a lot faster with a HashMap than a TreeMap - why was I even using a TreeMap in the first place?
+		
+		// Populate COCA map
+		System.out.println("----------------------------------------------------");
+		System.out.println("Populating COCA map...");
+		COCAMap.populateCocaMap();
+		
+		System.out.println("Beginning scans...");
+		System.out.println("----------------------------------------------------");
+
+		
+		// Scan each discussion
+		for (DiscussionEntry d : discussions.values()){
+			nEntry = d.getEntryNumber();
+			scanText(d.getDiscussionText());
+		}
+		
+		
 	}
 
 	
@@ -53,7 +69,7 @@ public class MainStuff {
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
-	public static TreeMap<Integer, DiscussionEntry> createTranscriptsMap() throws FileNotFoundException, IOException{
+	public static HashMap<Integer, DiscussionEntry> createTranscriptsMap() throws FileNotFoundException, IOException{
 		
 		/** The column in the sheet containing the encoded names */
 		final int COL_NAME = 0;
@@ -64,7 +80,7 @@ public class MainStuff {
 		/** The number of rows to analyze in the data workbook */
 		final int DISCUSSION_ROWS = 1230;
 		
-		TreeMap<Integer, DiscussionEntry> map = new TreeMap<Integer, DiscussionEntry>();
+		HashMap<Integer, DiscussionEntry> map = new HashMap<Integer, DiscussionEntry>();
 		
 		// POI jazz to get the first sheet from the Excel file
 		HSSFSheet discussionSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_FILE)).getSheetAt(0);
@@ -131,80 +147,18 @@ public class MainStuff {
 		
 	}
 
-	
-	/**
-	 * @param map A map containing the words for which to search
-	 * @return A TreeMap of all of the words in the COCA sheet (key) and the occurrence of each word (value)
-	 * @throws IOException
-	 */
-	public static void populateCocaMapFromWords(TreeMap<String, Integer> map) throws IOException{
-		
-		/** The column in the sheet containing the words */
-		final int COL_WORD = 3;		
-		/** The column in the sheet containing the parts of speech (PoS) */
-		final int COL_POS = 4;		
-		/** The column in the sheet containing the word count in all COCA entries */
-		final int COL_COCA_ALL = 5;
-		/** The column in the sheet containing the word count in all COCA Academic entries */
-		final int COL_COCA_ACAD = 6;
-
-		// POI jazz to get the first sheet from the Excel file
-		POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(COCA_FILE));
-		HSSFWorkbook wb = new HSSFWorkbook(fs);
-		HSSFSheet sheet = wb.getSheetAt(0);
-		HSSFRow row;
-
-		// Get the number of rows in the sheet
-		int rows = sheet.getPhysicalNumberOfRows();
-
-		int cols = 0; // Number of columns
-		int tmp = 0;
-
-		// This trick ensures that we get the data properly even if it doesn't start from first few rows
-		for(int i = 0; i < 10 || i < rows; i++) {
-			row = sheet.getRow(i);
-			if(row != null) {
-				tmp = sheet.getRow(i).getPhysicalNumberOfCells();
-				if(tmp > cols) cols = tmp;
-			}
-		}
-
-		for(int r = 1; r < rows; r++) {
-			row = sheet.getRow(r);
-			if(row != null) {
-				// Get the word from the row
-				String word = row.getCell(COL_WORD).getStringCellValue();
-
-				// Get the part of the speech of the word in the list
-				String pos = row.getCell(COL_POS).getStringCellValue();
-				
-				// If the word is in the map, get the freq value and add it to the map
-				if (map.containsKey(word) && (
-						pos.equals("n")		// Noun
-						|| pos.equals("j")	// Adjective
-						|| pos.equals("v")	// Verb
-						|| pos.equals("r")	// Adverb						
-				)){
-					cocaMap.put(word, (int)row.getCell(COL_COCA_ALL).getNumericCellValue());
-				}
-
-			}
-		}
-
-	}
-
 
 	/**
 	 * @param text The string containing the words to count.
 	 * @return A TreeMap containing key-value pairs of the words (key) and the number of occurrences (value)
 	 */
-	public static TreeMap<String, Integer> getWordCounts(String text){
+	public static HashMap<String, Integer> getWordCounts(String text){
 
 		// Split the text into words based on this regex
 		String[] words = text.split("[ \n\t\r.,;:!?(){}]");
 
 		// Create the map to store the words
-		TreeMap<String, Integer> map = new TreeMap<String, Integer>();
+		HashMap<String, Integer> map = new HashMap<String, Integer>();
 
 		for (int i = 0; i < words.length; i++) {
 
@@ -255,9 +209,9 @@ public class MainStuff {
 
 
 		/** Map of all of the words in the provided string (key) and the number of occurrences (value) */
-		TreeMap<String, Integer> map;
+		HashMap<String, Integer> map;
 
-		System.out.println("Beginning scan...");
+//		System.out.println("Beginning scan...");
 
 
 		// Clean the array of words and load the words into the map
@@ -270,7 +224,7 @@ public class MainStuff {
 		List<Word> wordlist = new ArrayList<Word>(entrySet.size());
 
 		// Populate the COCA map using words from the sample
-		populateCocaMapFromWords(map);	// TODO untested
+//		populateCocaMapFromWords(map);	// TODO removing this added SOOO MUUUUCH SPEEEED!! :D
 
 		// Get key and value from each entry
 		for (Map.Entry<String, Integer> entry: entrySet){
@@ -278,7 +232,7 @@ public class MainStuff {
 			// Ignore really infrequent words
 			if (entry.getValue() > 4){
 				try{
-					wordlist.add(new Word(entry.getKey(), entry.getValue(), cocaMap.get(entry.getKey())));
+					wordlist.add(new Word(entry.getKey(), entry.getValue(), COCAMap.getInstance().get(entry.getKey())));
 				} catch (Exception e){} // Do nothing if an error occurs
 			}
 		}
@@ -289,15 +243,28 @@ public class MainStuff {
 
 		// Print
 		//		System.out.printf("Occurrence of top %d words in %s:\n", wordlist.size(), f.getName());
-		System.out.printf("Occurrence of %d words in the sample:\n", wordlist.size());
-		System.out.println("Raw freq\tCOCA freq\tNorm freq\tWord");
-		System.out.println("----------------------------------------------------");
-
-		for (Word w : wordlist){
-			System.out.printf("%d\t\t%d\t\t%.2f\t\t%s\n", w.getRawFrequency(), w.getGlobalFrequency(), w.getNormalFreq(),  w.getValue());
+//		System.out.printf("Occurrence of %d words in the sample:\n", wordlist.size());
+//		System.out.println("Raw freq\tCOCA freq\tNorm freq\tWord");
+//		System.out.println("----------------------------------------------------");
+//
+//		for (Word w : wordlist){
+//			System.out.printf("%d\t\t%d\t\t%.2f\t\t%s\n", w.getRawFrequency(), w.getGlobalFrequency(), w.getNormalFreq(),  w.getValue());
+//		}
+//
+//		System.out.println("----------------------------------------------------");
+		
+		// Print 10 most frequent words based on normalized frequency
+		StringBuilder printStr = new StringBuilder(String.format("Top 10 words in entry %3d: ", nEntry));
+		for (int i = 0; i < 10; i++){
+			try{
+				printStr.append(wordlist.get(i) + (i==9 ? "." : ", "));
+			} catch (IndexOutOfBoundsException iobe){
+				System.err.printf("Entry %3d vector compilation ended abruptly on index %d\n", nEntry, i);
+				break;
+			}
 		}
-
-		System.out.println("----------------------------------------------------");
+		System.out.println(printStr);
+		
 	}
 	
 
