@@ -25,7 +25,7 @@ import org.apache.poi.ss.usermodel.Cell;
  */
 public class MainStuff {
 
-		/** Excel File from which to populate the discussion text */
+	/** Excel File from which to populate the discussion text */
 	private static final File DISCUSSIONS_FILE = new File("data/transcripts.xls");
 	/** Excel File from which to populate the discussion data (entry author, learning phase) */
 	private static final File DISCUSSIONS_DATA_FILE = new File("data/data.10.29.2014.xls");
@@ -230,11 +230,11 @@ public class MainStuff {
 		for (Map.Entry<String, Integer> entry: entrySet){
 
 			// Ignore really infrequent words
-			if (entry.getValue() > 4){
+//			if (entry.getValue() > 4){
 				try{
 					wordlist.add(new Word(entry.getKey(), entry.getValue(), COCAMap.getInstance().get(entry.getKey())));
 				} catch (Exception e){} // Do nothing if an error occurs
-			}
+//			}
 		}
 
 		/** Sorts the wordlist based on the implementation of the compareTo() method in the Word class.
