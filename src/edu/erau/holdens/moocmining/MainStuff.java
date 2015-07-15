@@ -23,6 +23,8 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.format.CellTextFormatter;
 import org.apache.poi.ss.usermodel.Cell;
 
+import weka.core.Instance;
+import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 
 /**
@@ -37,7 +39,7 @@ public class MainStuff {
 	/** Plaintext file containing all of the discussion text without regard to entry number */
 	private static final File ALL_TEXT_FILE = new File("data/text.txt");
 	/** CSV file containing the word-count vectors for each discussion entry */
-	private static final File STRUCTURED_FILE = new File("data/structuredData.csv");
+	public static final File STRUCTURED_FILE = new File("data/structuredData.csv");
 	/** The number of top words to get for analysis ("top" words when comparing normalized frequency values) */
 	public static final int N_TOP_WORDS = 40;
 
@@ -45,7 +47,7 @@ public class MainStuff {
 
 
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		
 		// Scan stuff
 //		scanFile(new File("data/text.txt"));
@@ -105,9 +107,6 @@ public class MainStuff {
 		
 		System.out.println("Results printed to " + STRUCTURED_FILE.getAbsolutePath());
 		
-		/* WEKA funtimes! */
-
-		
 	}
 
 	
@@ -157,7 +156,7 @@ public class MainStuff {
 //			System.out.println("Scanning cell " + dataRowNum);
 			
 			// Get the author
-			name = thisRow.getCell(COL_NAME).getStringCellValue();
+			name = thisRow.getCell(COL_NAME).getStringCellValue().trim();
 			
 			// Get the learning phase
 			if (checkCell(thisRow.getCell(2))){
