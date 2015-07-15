@@ -40,6 +40,8 @@ public class MainStuff {
 	private static final File ALL_TEXT_FILE = new File("data/text.txt");
 	/** CSV file containing the word-count vectors for each discussion entry */
 	public static final File STRUCTURED_FILE = new File("data/structuredData.csv");
+	/** ARFF file containing the word-count vectors for each discussion entry */
+	public static final File ARFF_FILE = new File("data/structuredData.arff");
 	/** The number of top words to get for analysis ("top" words when comparing normalized frequency values) */
 	public static final int N_TOP_WORDS = 40;
 
@@ -80,32 +82,72 @@ public class MainStuff {
 		
 		/* Write results to CSV */
 		// Open a file stream to the structured data file
-		BufferedWriter csvWriter = new BufferedWriter(new FileWriter(STRUCTURED_FILE));
+//		BufferedWriter csvWriter = new BufferedWriter(new FileWriter(STRUCTURED_FILE));
+//		
+//		csvWriter.write(String.format("Id,Author,Phase"));
+//		for (Word w : wordlist){
+////			System.out.printf();
+//			csvWriter.write(String.format(",%s", w));
+//		}
+//		csvWriter.write("\n");
+//		
+//		// Scan each discussion
+//		for (DiscussionEntry d : discussions.values()){
+//			
+//			csvWriter.write(String.format("%d,%s,%s", d.getEntryNumber(), d.getAuthor(), d.getLearningPhase().name()));
+//			
+//			HashMap<String, Integer> wordMap = d.scanWithRespectTo(wordlist);
+//			for (int count : wordMap.values()){
+//				csvWriter.write(String.format(",%d", count));
+//			}
+//			csvWriter.write("\n");
+//		}
+//		
+//		
+//		// Close the writer
+//		csvWriter.close();
 		
-		csvWriter.write(String.format("Id,Author,Phase"));
+		/* Write the ARFF file.
+		 * Note: There are methods in the Weka API to do this, but I fancy doing it more manually.
+		 * (see: https://weka.wikispaces.com/Creating+an+ARFF+file and https://weka.wikispaces.com/Programmatic+Use ) */
+		// Open the writer
+		BufferedWriter arffWriter = new BufferedWriter(new FileWriter(ARFF_FILE));
+		
+		// Write the header
+		arffWriter.write("@RELATION mooc\n\n");
+		
+		// Write the word attributes
 		for (Word w : wordlist){
-//			System.out.printf();
-			csvWriter.write(String.format(",%s", w));
+			// The ternary operator for "class" is to seperate the word class from the actual class of data defined later
+			arffWriter.write(String.format("@ATTRIBUTE %s\tinteger\n", (w.getValue().equals("class") ? "class_" : w.getValue())));
 		}
-		csvWriter.write("\n");
 		
-		// Scan each discussion
+		// Write the classes
+		arffWriter.write("@ATTRIBUTE class\t{T,E,I,R}\n\n");
+		
+		// Write the data only for known classes
+		arffWriter.write("@DATA\n");
 		for (DiscussionEntry d : discussions.values()){
 			
-			csvWriter.write(String.format("%d,%s,%s", d.getEntryNumber(), d.getAuthor(), d.getLearningPhase().name()));
+//			arffWriter.write(String.format("%d,%s,%s", d.getEntryNumber(), d.getAuthor(), d.getLearningPhase().name()));
 			
-			HashMap<String, Integer> wordMap = d.scanWithRespectTo(wordlist);
-			for (int count : wordMap.values()){
-				csvWriter.write(String.format(",%d", count));
+			if (d.getLearningPhase() != LearningPhase.X){
+
+				HashMap<String, Integer> wordMap = d.scanWithRespectTo(wordlist);
+				// Write word data
+				for (int count : wordMap.values()){
+					arffWriter.write(String.format("%d,", count));
+				}
+				// Write class
+				arffWriter.write(d.getLearningPhase().name() + "\n");
 			}
-			csvWriter.write("\n");
 		}
 		
 		
 		// Close the writer
-		csvWriter.close();
+		arffWriter.close();
 		
-		System.out.println("Results printed to " + STRUCTURED_FILE.getAbsolutePath());
+		System.out.println("Results printed to " + ARFF_FILE.getAbsolutePath());
 		
 	}
 
