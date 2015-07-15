@@ -133,6 +133,45 @@ public class DiscussionEntry implements Comparable<DiscussionEntry> {
 		
 	}
 	
+	/** Generates a word-count based on a list of given words; that is, this method will only return the raw frequency
+	 * of words for words that are in the given wordlist
+	 * @param wordlist The List of words with the respect of which to scan <sub>Phrasing that was fun...</sub> 
+	 * @return A HashMap containing the words (key) and the raw frequency in this discussion entry (value)
+	 */
+	public HashMap<String, Integer> scanWithRespectTo(List<Word> wordlist){
+		
+		// Create a map of words from the wordlist with a default value (number of occurrences) of zero
+		// Split the text into words based on this regex
+		String[] words = text.split("[ \n\t\r.,;:!?(){}]");
+
+		// Create the map to store the words
+		HashMap<String, Integer> map = new HashMap<String, Integer>();
+		for (Word w : wordlist){
+			map.put(w.getValue(), 0);
+		}
+
+		// Scan the discussion entry
+		for (int i = 0; i < words.length; i++) {
+
+			// Tidy up the word slightly
+			String key = words[i].toLowerCase().trim();
+
+			if (words[i].length() >= 1 && Character.isLetter(words[i].charAt(0)) ) {
+
+				// Increment the value in the map only if the word is present
+				if (map.get(key) != null) {
+					int value = map.get(key).intValue();
+					value++;
+					map.put(key, value);
+				}
+			}
+		}
+		
+		// Return the map
+		return map;
+		
+	}
+	
 	public String toString(){
 		return String.format("Number: %d; Author: %s; Phase: %s; Text: %s", number, author, phase.name(), text);
 	}

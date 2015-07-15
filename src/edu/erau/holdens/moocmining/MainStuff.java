@@ -30,6 +30,10 @@ public class MainStuff {
 	private static final File DISCUSSIONS_FILE = new File("data/transcripts.xls");
 	/** Excel File from which to populate the discussion data (entry author, learning phase) */
 	private static final File DISCUSSIONS_DATA_FILE = new File("data/data.10.29.2014.xls");
+	/** Plaintext file containing all of the discussion text without regard to entry number */
+	private static final File ALL_TEXT_FILE = new File("data/text.txt");
+	/** The number of top words to get for analysis ("top" words when comparing normalized frequency values) */
+	public static final int N_TOP_WORDS = 40;
 
 	// TODO learn to use XSSF for xlsx (or not...)
 
@@ -41,21 +45,49 @@ public class MainStuff {
 //		scanFile(new File("data/text.txt"));
 		
 		// Load the discussions
+		System.out.println("Populating discussions map...");
 		HashMap<Integer, DiscussionEntry> discussions = createTranscriptsMap();
 		// TODO (note) seems to be a lot faster with a HashMap than a TreeMap - why was I even using a TreeMap in the first place?
 		
 		// Populate COCA map
-		System.out.println("----------------------------------------------------");
 		System.out.println("Populating COCA map...");
 		COCAMap.populateCocaMap();
 		
-		System.out.println("Beginning scans...");
+		// Scan the file of all discussions and get the N-most-frequent words
+		// Get the 
+		System.out.println("Getting word frequencies for all words in all discussions...");
+		List<Word> wordlist = getWordFrequencyList(ALL_TEXT_FILE);
+		
+		/** Sorts the wordlist based on the implementation of the compareTo() method in the Word class.
+		 * Note: This method requires Java 8 or higher */ 
+		System.out.println("Sorting wordlist based on normalized frequency...");
+		wordlist.sort(null); // TODO look into NavigableMap and NavigableSet for this
+		
+		
+		System.out.println("Generating populatity of top " + N_TOP_WORDS + " words in all discussions...");
+//		System.out.println("Beginning scans...");
 		System.out.println("----------------------------------------------------");
 
+		// Trim the wordlist
+		wordlist = wordlist.subList(0, N_TOP_WORDS);
+		
+		// Print the header
+		System.out.printf("Id,Author,Phase");
+		for (Word w : wordlist){
+			System.out.printf(",%s", w);
+		}
+		System.out.println();
 		
 		// Scan each discussion
 		for (DiscussionEntry d : discussions.values()){
-			d.scan();
+			
+			System.out.printf("%d,%s,%s", d.getEntryNumber(), d.getAuthor(), d.getLearningPhase().name());
+			
+			HashMap<String, Integer> wordMap = d.scanWithRespectTo(wordlist);
+			for (int count : wordMap.values()){
+				System.out.printf(",%d", count);
+			}
+			System.out.println();
 		}
 		
 		
@@ -105,7 +137,7 @@ public class MainStuff {
 			
 			HSSFRow thisRow = dataSheet.getRow(dataRowNum);
 			
-			System.out.println("Scanning cell " + dataRowNum);
+//			System.out.println("Scanning cell " + dataRowNum);
 			
 			// Get the author
 			name = thisRow.getCell(COL_NAME).getStringCellValue();
@@ -137,12 +169,14 @@ public class MainStuff {
 			 */
 			while (stillReading){
 				// Get the text from the row
-				System.out.printf("Currently reading dataRow %d; discussionRow %d\n", dataRowNum, discRowNum);
+//				System.out.printf("Currently reading dataRow %d; discussionRow %d\n", dataRowNum, discRowNum);
 //				text += textRow.getCell(COL_TEXT).getStringCellValue();
 				try{
 					text += textRow.getCell(COL_TEXT).getStringCellValue()+"\n";
-					System.out.println(text);
-				} catch (Exception e){System.err.println(e.getMessage());};
+//					System.out.println(text);
+				} catch (Exception e){
+//					System.err.println(e.getMessage());
+				};
 				
 				// Get the next row
 				discRowNum++;
@@ -203,12 +237,12 @@ public class MainStuff {
 	}
 	
 
-	/** Scans a file.  Any output is currently written to the console.
+	/** Gets 
 	 * @param f The file to scan
 	 * @throws IOException
 	 */
-	public static void scanFile(File f) throws IOException{
-		scanText(getFullFileText(f));
+	public static List<Word> getWordFrequencyList(File f) throws IOException{
+		return getWordFrequencyList(getFullFileText(f));
 	}
 
 	
@@ -222,11 +256,8 @@ public class MainStuff {
 	 * <li> Print the results
 	 * </ol>
 	 * @param text The text to scan
-	 * @Deprecated For this program, you probably want to scan a {@link DiscussionEntry}, so use the non-static
-	 * {@link DiscussionEntry#scan()} method.
 	 */
-	@Deprecated
-	public static void scanText(String text) {
+	public static List<Word> getWordFrequencyList(String text) {
 
 
 		/** Map of all of the words in the provided string (key) and the number of occurrences (value) */
@@ -258,10 +289,10 @@ public class MainStuff {
 //			}
 		}
 
-		/** Sorts the wordlist based on the implementation of the compareTo() method in the Word class.
-		 * Note: This method requires Java 8 or higher */ 
-		wordlist.sort(null); // TODO look into NavigableMap and NavigableSet for this
+		
 
+		return wordlist;
+		
 		// Print
 		//		System.out.printf("Occurrence of top %d words in %s:\n", wordlist.size(), f.getName());
 //		System.out.printf("Occurrence of %d words in the sample:\n", wordlist.size());
