@@ -2,9 +2,11 @@ package edu.erau.holdens.moocmining;
 
 import static edu.erau.holdens.moocmining.Utils.getFullFileText;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +23,8 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.format.CellTextFormatter;
 import org.apache.poi.ss.usermodel.Cell;
 
+import weka.core.converters.ConverterUtils.DataSource;
+
 /**
  * @author Sean Holden (holdens@my.erau.edu), with some derivative code (original word counting code) from Nick Brixius (brixiusn@erau.edu)
  */
@@ -32,6 +36,8 @@ public class MainStuff {
 	private static final File DISCUSSIONS_DATA_FILE = new File("data/data.10.29.2014.xls");
 	/** Plaintext file containing all of the discussion text without regard to entry number */
 	private static final File ALL_TEXT_FILE = new File("data/text.txt");
+	/** CSV file containing the word-count vectors for each discussion entry */
+	private static final File STRUCTURED_FILE = new File("data/structuredData.csv");
 	/** The number of top words to get for analysis ("top" words when comparing normalized frequency values) */
 	public static final int N_TOP_WORDS = 40;
 
@@ -66,30 +72,41 @@ public class MainStuff {
 		
 		System.out.println("Generating populatity of top " + N_TOP_WORDS + " words in all discussions...");
 //		System.out.println("Beginning scans...");
-		System.out.println("----------------------------------------------------");
 
 		// Trim the wordlist
 		wordlist = wordlist.subList(0, N_TOP_WORDS);
 		
-		// Print the header
-		System.out.printf("Id,Author,Phase");
+		/* Write results to CSV */
+		// Open a file stream to the structured data file
+		BufferedWriter csvWriter = new BufferedWriter(new FileWriter(STRUCTURED_FILE));
+		
+		csvWriter.write(String.format("Id,Author,Phase"));
 		for (Word w : wordlist){
-			System.out.printf(",%s", w);
+//			System.out.printf();
+			csvWriter.write(String.format(",%s", w));
 		}
-		System.out.println();
+		csvWriter.write("\n");
 		
 		// Scan each discussion
 		for (DiscussionEntry d : discussions.values()){
 			
-			System.out.printf("%d,%s,%s", d.getEntryNumber(), d.getAuthor(), d.getLearningPhase().name());
+			csvWriter.write(String.format("%d,%s,%s", d.getEntryNumber(), d.getAuthor(), d.getLearningPhase().name()));
 			
 			HashMap<String, Integer> wordMap = d.scanWithRespectTo(wordlist);
 			for (int count : wordMap.values()){
-				System.out.printf(",%d", count);
+				csvWriter.write(String.format(",%d", count));
 			}
-			System.out.println();
+			csvWriter.write("\n");
 		}
 		
+		
+		// Close the writer
+		csvWriter.close();
+		
+		System.out.println("Results printed to " + STRUCTURED_FILE.getAbsolutePath());
+		
+		/* WEKA funtimes! */
+
 		
 	}
 
@@ -319,5 +336,5 @@ public class MainStuff {
 		
 	}
 	
-
+	
 }
