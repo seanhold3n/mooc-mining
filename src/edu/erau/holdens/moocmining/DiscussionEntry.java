@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Set;
 
 
+/** Represents a post in the MOOC blog.
+ * @author Sean Holden (holdens@my.erau.edu)
+ */
 public class DiscussionEntry implements Comparable<DiscussionEntry> {
 	
 	/** The number of the entry in the discussion */

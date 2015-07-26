@@ -1,7 +1,5 @@
 package edu.erau.holdens.moocmining;
 
-import static edu.erau.holdens.moocmining.Utils.getFullFileText;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,19 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.apache.poi.ss.format.CellTextFormatter;
-import org.apache.poi.ss.usermodel.Cell;
-
-import weka.core.Instance;
-import weka.core.Instances;
-import weka.core.converters.ConverterUtils.DataSource;
 
 /**
  * @author Sean Holden (holdens@my.erau.edu), with some derivative code (original word counting code) from Nick Brixius (brixiusn@erau.edu)
@@ -47,90 +37,57 @@ public class MainStuff {
 
 	// TODO learn to use XSSF for xlsx (or not...)
 
-
-	
 	public static void main(String[] args) throws Exception {
-		
-		// Scan stuff
-//		scanFile(new File("data/text.txt"));
-		
+
 		// Load the discussions
 		System.out.println("Populating discussions map...");
 		HashMap<Integer, DiscussionEntry> discussions = createTranscriptsMap();
-		// TODO (note) seems to be a lot faster with a HashMap than a TreeMap - why was I even using a TreeMap in the first place?
-		
+
+
 		// Populate COCA map
 		System.out.println("Populating COCA map...");
 		COCAMap.populateCocaMap();
-		
-		// Scan the file of all discussions and get the N-most-frequent words
-		// Get the 
+
+
+		// Scan the file of all discussions
 		System.out.println("Getting word frequencies for all words in all discussions...");
 		List<Word> wordlist = getWordFrequencyList(ALL_TEXT_FILE);
-		
+
+
 		/** Sorts the wordlist based on the implementation of the compareTo() method in the Word class.
 		 * Note: This method requires Java 8 or higher */ 
 		System.out.println("Sorting wordlist based on normalized frequency...");
 		wordlist.sort(null); // TODO look into NavigableMap and NavigableSet for this
-		
-		
-		System.out.println("Generating populatity of top " + N_TOP_WORDS + " words in all discussions...");
-//		System.out.println("Beginning scans...");
+
 
 		// Trim the wordlist
+		System.out.println("Generating populatity of top " + N_TOP_WORDS + " words in all discussions...");
 		wordlist = wordlist.subList(0, N_TOP_WORDS);
-		
-		/* Write results to CSV */
-		// Open a file stream to the structured data file
-//		BufferedWriter csvWriter = new BufferedWriter(new FileWriter(STRUCTURED_FILE));
-//		
-//		csvWriter.write(String.format("Id,Author,Phase"));
-//		for (Word w : wordlist){
-////			System.out.printf();
-//			csvWriter.write(String.format(",%s", w));
-//		}
-//		csvWriter.write("\n");
-//		
-//		// Scan each discussion
-//		for (DiscussionEntry d : discussions.values()){
-//			
-//			csvWriter.write(String.format("%d,%s,%s", d.getEntryNumber(), d.getAuthor(), d.getLearningPhase().name()));
-//			
-//			HashMap<String, Integer> wordMap = d.scanWithRespectTo(wordlist);
-//			for (int count : wordMap.values()){
-//				csvWriter.write(String.format(",%d", count));
-//			}
-//			csvWriter.write("\n");
-//		}
-//		
-//		
-//		// Close the writer
-//		csvWriter.close();
-		
+
+
 		/* Write the ARFF file.
 		 * Note: There are methods in the Weka API to do this, but I fancy doing it more manually.
 		 * (see: https://weka.wikispaces.com/Creating+an+ARFF+file and https://weka.wikispaces.com/Programmatic+Use ) */
 		// Open the writer
 		BufferedWriter arffWriter = new BufferedWriter(new FileWriter(ARFF_FILE));
-		
+
 		// Write the header
 		arffWriter.write("@RELATION mooc\n\n");
-		
+
 		// Write the word attributes
 		for (Word w : wordlist){
 			// The ternary operator for "class" is to seperate the word class from the actual class of data defined later
 			arffWriter.write(String.format("@ATTRIBUTE %s\tinteger\n", (w.getValue().equals("class") ? "class_" : w.getValue())));
 		}
-		
+
 		// Write the classes
 		arffWriter.write("@ATTRIBUTE class\t{T,E,I,R}\n\n");
-		
+
 		// Write the data only for known classes
 		arffWriter.write("@DATA\n");
 		for (DiscussionEntry d : discussions.values()){
-			
-//			arffWriter.write(String.format("%d,%s,%s", d.getEntryNumber(), d.getAuthor(), d.getLearningPhase().name()));
-			
+
+			// Do not include unknowns in the ARFF
 			if (d.getLearningPhase() != LearningPhase.X){
 
 				HashMap<String, Integer> wordMap = d.scanWithRespectTo(wordlist);
@@ -142,23 +99,23 @@ public class MainStuff {
 				arffWriter.write(d.getLearningPhase().name() + "\n");
 			}
 		}
-		
-		
+
+
 		// Close the writer
 		arffWriter.close();
-		
+
 		System.out.println("Results printed to " + ARFF_FILE.getAbsolutePath());
-		
+
 	}
 
-	
+
 	/**
 	 * @return A TreeMap containing key-value pairs of the words entry number (key) and the discussion entry (value)
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
 	public static HashMap<Integer, DiscussionEntry> createTranscriptsMap() throws FileNotFoundException, IOException{
-		
+
 		/** The column in the sheet containing the encoded names (data xls) */
 		final int COL_NAME = 0;
 		/** The column in the sheet containing the words (text xls) */
@@ -167,15 +124,13 @@ public class MainStuff {
 		final int DATA_ROWS = 746; 	// TODO gets wonky when this is 747
 		/** The number of rows to analyze in the data workbook */
 		final int DISCUSSION_ROWS = 1230;
-		
+
 		HashMap<Integer, DiscussionEntry> map = new HashMap<Integer, DiscussionEntry>();
-		
+
 		// POI jazz to get the first sheet from the Excel file
 		HSSFSheet discussionSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_FILE)).getSheetAt(0);
 		HSSFSheet dataSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_DATA_FILE)).getSheetAt(0);
-		
-		
-		
+
 		// DiscussionEntry data
 		String name;
 		String text;
@@ -192,14 +147,12 @@ public class MainStuff {
 
 		// Get all of the data (exclude the header row)
 		for (int dataRowNum = 1; dataRowNum < DATA_ROWS; dataRowNum++){
-			
+
 			HSSFRow thisRow = dataSheet.getRow(dataRowNum);
-			
-//			System.out.println("Scanning cell " + dataRowNum);
-			
+
 			// Get the author
 			name = thisRow.getCell(COL_NAME).getStringCellValue().trim();
-			
+
 			// Get the learning phase
 			if (checkCell(thisRow.getCell(2))){
 				lp = LearningPhase.T;
@@ -227,15 +180,10 @@ public class MainStuff {
 			 */
 			while (stillReading){
 				// Get the text from the row
-//				System.out.printf("Currently reading dataRow %d; discussionRow %d\n", dataRowNum, discRowNum);
-//				text += textRow.getCell(COL_TEXT).getStringCellValue();
 				try{
 					text += textRow.getCell(COL_TEXT).getStringCellValue()+"\n";
-//					System.out.println(text);
-				} catch (Exception e){
-//					System.err.println(e.getMessage());
-				};
-				
+				} catch (Exception e){};
+
 				// Get the next row
 				discRowNum++;
 				textRow = discussionSheet.getRow(discRowNum);
@@ -245,17 +193,15 @@ public class MainStuff {
 					stillReading = true;
 				}
 			}
-			
-			
+
 			map.put(dataRowNum, new DiscussionEntry(dataRowNum, name, text, lp));
-		
-			
+
 		}
-		
+
 		assert(discRowNum == DISCUSSION_ROWS);
-		
+
 		return map;
-		
+
 	}
 
 
@@ -293,36 +239,31 @@ public class MainStuff {
 
 		return map;
 	}
-	
 
-	/** Gets 
+
+	/** Invokes the {@link #getWordFrequencyList(String)} method on the complete text of the given file.
 	 * @param f The file to scan
-	 * @throws IOException
+	 * @throws IOException If there is an error getting the file text
 	 */
 	public static List<Word> getWordFrequencyList(File f) throws IOException{
-		return getWordFrequencyList(getFullFileText(f));
+		return getWordFrequencyList(Utils.getFullFileText(f));
 	}
 
-	
+
 	/** Scans a string.  Any output is currently written to the console.
 	 * The general procedure of this method is as follows:
 	 * <ol>
 	 * <li> Create a map of all of the words and their frequencies in the given string
-	 * <li> Create a map of all matching words and their frequencies in the COCA Excel sheet
-	 * <li> Merge the data of the two maps by creating a list of {@link Word} objects that contains values for both the frequencies
+	 * <li> Merge the data of that map and the {@link COCAMap} to create a list of {@link Word} objects that contains values for both the frequencies.  
+	 * Note: this assumes that the COCAMap has already been populated using {@link COCAMap#populateCocaMap()}
 	 * <li> From within the Word class, calculate the <i>normalized</i> frequency by comparing the sample frequency with the COCA frequency
-	 * <li> Print the results
 	 * </ol>
 	 * @param text The text to scan
 	 */
 	public static List<Word> getWordFrequencyList(String text) {
 
-
 		/** Map of all of the words in the provided string (key) and the number of occurrences (value) */
 		HashMap<String, Integer> map;
-
-//		System.out.println("Beginning scan...");
-
 
 		// Clean the array of words and load the words into the map
 		map = getWordCounts(text);
@@ -333,49 +274,32 @@ public class MainStuff {
 		// Create word list
 		List<Word> wordlist = new ArrayList<Word>(entrySet.size());
 
-		// Populate the COCA map using words from the sample
-//		populateCocaMapFromWords(map);	// TODO removing this added SOOO MUUUUCH SPEEEED!! :D
-
 		// Get key and value from each entry
 		for (Map.Entry<String, Integer> entry: entrySet){
-
-			// Ignore really infrequent words
-//			if (entry.getValue() > 4){
-				try{
-					wordlist.add(new Word(entry.getKey(), entry.getValue(), COCAMap.getInstance().get(entry.getKey())));
-				} catch (Exception e){} // Do nothing if an error occurs
-//			}
+			try{
+				// Create a Word object and add it to the wordlist
+				wordlist.add(new Word(entry.getKey(), entry.getValue(), COCAMap.getInstance().get(entry.getKey())));
+			} catch (Exception e){} // Do nothing if an error occurs
 		}
 
-		
+		return wordlist;	
 
-		return wordlist;
-		
-		// Print
-		//		System.out.printf("Occurrence of top %d words in %s:\n", wordlist.size(), f.getName());
-//		System.out.printf("Occurrence of %d words in the sample:\n", wordlist.size());
-//		System.out.println("Raw freq\tCOCA freq\tNorm freq\tWord");
-//		System.out.println("----------------------------------------------------");
-//
-//		for (Word w : wordlist){
-//			System.out.printf("%d\t\t%d\t\t%.2f\t\t%s\n", w.getRawFrequency(), w.getGlobalFrequency(), w.getNormalFreq(),  w.getValue());
-//		}
-//
-//		System.out.println("----------------------------------------------------");
-		
-	
-		
 	}
-	
-	public static boolean checkCell(HSSFCell c){
 
+	/** Helper method to see if the value of the cell is a 1.  This is used when determining the
+	 * learning phase of a post.
+	 * @param c The cell to check
+	 * @return <b>true</b> if the cell contains a numeric 1 value, or <br>
+	 * <b>false</b> if it doesn't or if an error occurs (when checking a 
+	 * null cell, for example)
+	 */
+	private static boolean checkCell(HSSFCell c){
 		try{
 			return (c.getNumericCellValue() == 1);
 		} catch (NullPointerException npe){
 			return false;
-		}
-		
+		}		
 	}
-	
-	
+
+
 }

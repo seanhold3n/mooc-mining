@@ -10,21 +10,22 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 
-/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value)
+/** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value).
  * @author Sean Holden (holdens@my.erau.edu)
- *
  */
 public class COCAMap extends HashMap<String, Integer>{
 
 	private static final long serialVersionUID = -6394472852481588497L;
 	
-	/** Excel File from which to populate the COCA map */
-	private static final File COCA_FILE = new File("data/allWords.xls");	
+	/** Path to the Excel file (.xls only; .xlsx will NOT work) from which to populate the COCA map. */
+	public static final String COCA_FILE_PATH = "data/allWords.xls";	
 
-	/** The (ideally) single COCA map */
+	/** The (ideally) single COCA map. */
 	private static COCAMap cocamap;
 	
-	/** Get the "official" COCA map object from this class */
+	/** Get the "official" COCA map object from this class.
+	 * @return A COCAMap of all of the words in the COCA sheet (key) and the occurrence of each word (value).
+	 */
 	public static COCAMap getInstance(){
 		if (cocamap == null){
 			cocamap = new COCAMap();
@@ -32,16 +33,11 @@ public class COCAMap extends HashMap<String, Integer>{
 		return cocamap;
 	}
 	
-	public static void populateCocaMap() throws IOException{
-		populateCocaMapFromWords(null);
-	}
-	
-	/**
-	 * @param map A map containing the words for which to search
-	 * @return A TreeMap of all of the words in the COCA sheet (key) and the occurrence of each word (value)
-	 * @throws IOException
+	/** Populates the COCA map object in this class (accessible via the {@link getInstance} method) with all of the words in
+	 * the COCA file.  The location of this file is specified by {@link COCAMap#COCA_FILE_PATH}.
+	 * @throws IOException If an error occurs while reading the file
 	 */
-	public static void populateCocaMapFromWords(HashMap<String, Integer> map) throws IOException{
+	public static void populateCocaMap() throws IOException{
 		
 		/** The column in the sheet containing the words */
 		final int COL_WORD = 3;		
@@ -50,10 +46,11 @@ public class COCAMap extends HashMap<String, Integer>{
 		/** The column in the sheet containing the word count in all COCA entries */
 		final int COL_COCA_ALL = 5;
 		/** The column in the sheet containing the word count in all COCA Academic entries */
+		@SuppressWarnings("unused")
 		final int COL_COCA_ACAD = 6;
 
 		// POI jazz to get the first sheet from the Excel file
-		POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(COCA_FILE));
+		POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(new File(COCA_FILE_PATH)));
 		HSSFWorkbook wb = new HSSFWorkbook(fs);
 		HSSFSheet sheet = wb.getSheetAt(0);
 		HSSFRow row;
@@ -65,6 +62,7 @@ public class COCAMap extends HashMap<String, Integer>{
 		int tmp = 0;
 
 		// This trick ensures that we get the data properly even if it doesn't start from first few rows
+		// TODO I'm not sure why this is here or if it's really needed
 		for(int i = 0; i < 10 || i < rows; i++) {
 			row = sheet.getRow(i);
 			if(row != null) {
@@ -82,10 +80,10 @@ public class COCAMap extends HashMap<String, Integer>{
 				// Get the part of the speech of the word in the list
 				String pos = row.getCell(COL_POS).getStringCellValue();
 				
-				// If the word is in the map, get the freq value and add it to the map
+				// If the word is in the map, get the freq value and add it to the map.
+				// This only applies to nouns, adjectives, verbs, and adverbs.
 				if (
-//						map.containsKey(word) && ( // TODO ignoring if it'll be used - get ALL THE WORDS!
-						(pos.equals("n")		// Noun
+						(pos.equals("n")	// Noun
 						|| pos.equals("j")	// Adjective
 						|| pos.equals("v")	// Verb
 						|| pos.equals("r")	// Adverb						

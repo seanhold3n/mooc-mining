@@ -14,7 +14,6 @@ public class Word implements Comparable<Word>{
 	 * for a higher distance between data points. */
 	private static final int NORM_MOD = 1000;
 	
-	
 	/** The frequency of the word in COCA */
 	private final int globalFrequency;
 	
@@ -47,17 +46,12 @@ public class Word implements Comparable<Word>{
 	 * the sort order.
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
-	public int compareTo(Word o){
-		// Sort by raw frequency
-//		return (SORT_ASCENDING) ? this.getRawFrequency() - o.getRawFrequency() 
-//								: o.getRawFrequency() - this.getRawFrequency();
-		
+	public int compareTo(Word o){		
 		// Sort by normalized frequency
 		return (SORT_ASCENDING) ? (int)((this.getNormalFreq() - o.getNormalFreq())*NORM_MOD)
 								: (int)(( o.getNormalFreq() - this.getNormalFreq())*NORM_MOD);
 		/* TODO even though this is clever, a cleaned-up version of this that didn't rely
 		 * on integer casting would be even better because it would remove the need for the NORM_MOD */
-		
 	}
 
 	/**
