@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 
 /**
  * @author Sean Holden (holdens@my.erau.edu), with some derivative code (original word counting code) from Nick Brixius (brixiusn@erau.edu)
@@ -128,8 +128,8 @@ public class MainStuff {
 		HashMap<Integer, DiscussionEntry> map = new HashMap<Integer, DiscussionEntry>();
 
 		// POI jazz to get the first sheet from the Excel file
-		HSSFSheet discussionSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_FILE)).getSheetAt(0);
-		HSSFSheet dataSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_DATA_FILE)).getSheetAt(0);
+		Sheet discussionSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_FILE)).getSheetAt(0);
+		Sheet dataSheet = new HSSFWorkbook(new FileInputStream(DISCUSSIONS_DATA_FILE)).getSheetAt(0);
 
 		// DiscussionEntry data
 		String name;
@@ -143,12 +143,12 @@ public class MainStuff {
 		int discRowNum = 1;
 
 		// Get the first row of text per entry
-		HSSFRow textRow = dataSheet.getRow(discRowNum);
+		Row textRow = dataSheet.getRow(discRowNum);
 
 		// Get all of the data (exclude the header row)
 		for (int dataRowNum = 1; dataRowNum < DATA_ROWS; dataRowNum++){
 
-			HSSFRow thisRow = dataSheet.getRow(dataRowNum);
+			Row thisRow = dataSheet.getRow(dataRowNum);
 
 			// Get the author
 			name = thisRow.getCell(COL_NAME).getStringCellValue().trim();
@@ -293,7 +293,7 @@ public class MainStuff {
 	 * <b>false</b> if it doesn't or if an error occurs (when checking a 
 	 * null cell, for example)
 	 */
-	private static boolean checkCell(HSSFCell c){
+	private static boolean checkCell(Cell c){
 		try{
 			return (c.getNumericCellValue() == 1);
 		} catch (NullPointerException npe){

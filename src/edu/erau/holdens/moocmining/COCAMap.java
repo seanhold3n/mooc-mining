@@ -5,10 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 /** Map of all of the words in the COCA Academic texts (key) and the number of occurrences (value).
  * @author Sean Holden (holdens@my.erau.edu)
@@ -50,10 +50,9 @@ public class COCAMap extends HashMap<String, Integer>{
 		final int COL_COCA_ACAD = 6;
 
 		// POI jazz to get the first sheet from the Excel file
-		POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(new File(COCA_FILE_PATH)));
-		HSSFWorkbook wb = new HSSFWorkbook(fs);
-		HSSFSheet sheet = wb.getSheetAt(0);
-		HSSFRow row;
+		Workbook wb = new HSSFWorkbook(new FileInputStream(new File(COCA_FILE_PATH)));
+		Sheet sheet = wb.getSheetAt(0);
+		Row row;
 
 		// Get the number of rows in the sheet
 		int rows = sheet.getPhysicalNumberOfRows();
